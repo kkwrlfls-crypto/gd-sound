@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GD Sound - 교회 음향 장비 관리</title>
+    <!-- Tailwind CSS (UI 디자인) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- QR Code Generator 라이브러리 -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <!-- HTML5 QR Code Scanner 라이브러리 (카메라 스캔용) -->
+    <script src="https://unpkg.com/html5-qrcode"></script>
+
+    <!-- Firebase SDK (v10 JS 모듈) -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-app.js";
+        import { getFirestore, collection, addDoc, getDocs, doc, updateDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-firestore.js";
+
+        // 사용자분의 Firebase Console 설정값이 완벽하게 적용된 객체입니다.
+        const firebaseConfig = {
+            apiKey: "AIzaSyA19D08kuFX60FAliuKguBLBi4xAuJaDiM",
+            authDomain: "gd-sound.firebaseapp.com",
+            projectId: "gd-sound",
+            storageBucket: "gd-sound.firebasestorage.app",
+            messagingSenderId: "1031733562702",
+            appId: "1:1031733562702:web:fa0b25f645d50622a2e21f"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        window.db = db;
+        window.addDoc = addDoc;
+        window.collection = collection;
+        window.getDocs = getDocs;
+        window.doc = doc;
+        window.updateDoc = updateDoc;
+        window.serverTimestamp = serverTimestamp;
+    </script>
+</head>
+<body class="bg-gray-100 text-gray-800 pb-12">
+
+    <!-- 상단 헤더 -->
+    <header class="bg-blue-900 text-white p-4 shadow-md sticky top-0 z-40">
+        <div class="max-w-4xl mx-auto flex justify-between items-center">
+            <h1 class="text-xl font-bold">GD Sound 장비관리</h1>
+            <span class="text-xs bg-blue-700 px-2 py-1 rounded">Phase 2 (QR통합)</span>
+        </div>
+    </header>
+
+    <main class="max-w-4xl mx-auto p-4 space-y-6">
+
+        <!-- QR 스캔 버튼 -->
+        <section class="bg-white p-4 rounded-lg shadow text-center">
+            <button onclick="openScanner()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 px-4 rounded-lg flex items-center justify-center space-x-2 shadow-lg transition">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"></path></svg>
+                <span class="text-lg">📷 QR 코드 스캔하기</span>
+            </button>
+        </section>
+
+        <!-- 1. 신규 자산 등록 폼 -->
+        <section class="bg-white p-5 rounded-lg shadow">
+            <h2 class="text-lg font-bold mb-4 border-b pb-2 text-blue-900">📦 신규 자산 등록</h2>
+            <form id="assetForm" onsubmit="handleAssetSubmit(event)" class="space-y-4">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">구분 (대분류)</label>
+                        <select id="category" class="mt-1 w-full border border-gray-300 rounded p-2" required>
+                            <option value="CBL">케이블 (CBL)</option>
+                            <option value="MIC">마이크 (MIC)</option>
+                            <option value="RF">무선 마이크/수신기 (RF)</option>
+                            <option value="AMP">앰프 (AMP)</option>
+                            <option value="SPK">스피커 (SPK)</option>
+                            <option value="ETC">기타 음향장비 (ETC)</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">품목 / 종류</label>
+                        <input type="text" id="type" placeholder="예: XLR-XLR, SM58, DPA4011" class="mt-1 w-full border border-gray-300 rounded p-2" required>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">규격 / 길이 (케이블일 경우 필수)</label>
+                        <input type="text" id="spec" placeholder="예: 3M, 5M, 10M" class="mt-1 w-full border border-gray-300 rounded p-2">
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">제조사 / 모델명</label>
+                        <input type="text" id="model" placeholder="예: Canare / Shure / DPA" class="mt-1 w-full border border-gray-300 rounded p-2">
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">시작번호 / 등록 수량</label>
+                        <div class="flex space-x-2">
+                            <input type="number" id="startNum" value="1" min="1" class="w-1/2 border border-gray-300 rounded p-2" title="시작 번호">
+                            <input type="number" id="count" value="1" min="1" max="50" class="w-1/2 border border-gray-300 rounded p-2" title="일괄 등록 수량">
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">보관 위치</label>
+                        <select id="location" class="mt-1 w-full border border-gray-300 rounded p-2">
+                            <option value="케이블함 A">케이블함 A</option>
+                            <option value="케이블함 B">케이블함 B</option>
+                            <option value="음향실">음향실</option>
+                            <option value="마이크함">마이크함</option>
+                            <option value="무선랙">무선랙</option>
+                            <option value="창고">창고</option>
+                        </select>
+                    </div>
+                </div>
+
+                <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 rounded transition">
+                    자산 등록하기
+                </button>
+            </form>
+        </section>
+
+        <!-- 2. 등록 자산 목록 -->
+        <section class="bg-white p-5 rounded-lg shadow">
+            <div class="flex justify-between items-center mb-4 border-b pb-2">
+                <h2 class="text-lg font-bold text-blue-900">📋 등록된 자산 목록</h2>
+                <button onclick="loadAssets()" class="text-sm bg-gray-200 hover:bg-gray-300 px-3 py-1 rounded">새로고침</button>
+            </div>
+
+            <div class="mb-4">
+                <input type="text" id="searchInput" onkeyup="filterAssets()" placeholder="관리번호, 품목, 위치 검색..." class="w-full border border-gray-300 rounded p-2">
+            </div>
+
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                        <tr class="bg-gray-100 text-xs font-semibold text-gray-600 border-b">
+                            <th class="p-2">관리번호</th>
+                            <th class="p-2">구분/품목</th>
+                            <th class="p-2">규격</th>
+                            <th class="p-2">상태</th>
+                            <th class="p-2">위치</th>
+                            <th class="p-2 text-center">QR</th>
+                        </tr>
+                    </thead>
+                    <tbody id="assetTableBody" class="text-sm divide-y">
+                        <tr><td colspan="6" class="p-4 text-center text-gray-500">불러오는 중...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    </main>
+
+    <!-- QR 스캐너 모달 -->
+    <div id="scannerModal" class="hidden fixed inset-0 bg-black bg-opacity-75 z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-lg max-w-md w-full p-4 space-y-4">
+            <div class="flex justify-between items-center border-b pb-2">
+                <h3 class="font-bold text-lg">📷 QR 코드 스캔</h3>
+                <button onclick="closeScanner()" class="text-gray-500 font-bold text-xl">✕</button>
+            </div>
+            <div id="reader" class="w-full"></div>
+            <p class="text-xs text-center text-gray-500">카메라 권한을 허용한 후 QR 코드를 맞춰주세요.</p>
+        </div>
+    </div>
+
+    <!-- QR 라벨 보기 모달 -->
+    <div id="qrModal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-lg max-w-sm w-full p-6 text-center space-y-4">
+            <h3 id="qrModalTitle" class="font-bold text-lg text-blue-900"></h3>
+            <div id="qrcode" class="flex justify-center my-4"></div>
+            <p id="qrModalSub" class="text-xs text-gray-500 font-mono"></p>
+            <div class="flex space-x-2">
+                <button onclick="window.print()" class="w-1/2 bg-blue-600 text-white py-2 rounded font-bold">인쇄하기</button>
+                <button onclick="closeQRModal()" class="w-1/2 bg-gray-300 text-gray-800 py-2 rounded font-bold">닫기</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 자산 상세 & 상태/위치 변경 모달 -->
+    <div id="detailModal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-lg max-w-md w-full p-6 space-y-4">
+            <div class="flex justify-between items-center border-b pb-2">
+                <h3 class="font-bold text-lg text-blue-900">자산 상태 / 위치 변경</h3>
+                <button onclick="closeDetailModal()" class="text-gray-500 font-bold text-xl">✕</button>
+            </div>
+            <div id="detailContent" class="space-y-2 text-sm bg-gray-50 p-3 rounded"></div>
+            <div class="space-y-3 pt-2">
+                <div>
+                    <label class="block text-xs font-bold text-gray-700 mb-1">상태 변경</label>
+                    <select id="editStatus" class="w-full border rounded p-2 text-sm">
+                        <option value="정상">정상</option>
+                        <option value="행사 출고">행사 출고</option>
+                        <option value="수리">수리 필요 / 수리 중</option>
+                        <option value="분실">분실</option>
+                        <option value="폐기">폐기</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-gray-700 mb-1">위치 변경</label>
+                    <select id="editLocation" class="w-full border rounded p-2 text-sm">
+                        <option value="케이블함 A">케이블함 A</option>
+                        <option value="케이블함 B">케이블함 B</option>
+                        <option value="음향실">음향실</option>
+                        <option value="마이크함">마이크함</option>
+                        <option value="무선랙">무선랙</option>
+                        <option value="창고">창고</option>
+                        <option value="무대">무대</option>
+                    </select>
+                </div>
+                <button onclick="saveAssetChanges()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 rounded transition">
+                    상태/위치 저장하기
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 자산 기능 동작 스크립트 -->
+    <script>
+        let html5QrcodeScanner = null;
+        let selectedDocId = null;
+        let allAssets = [];
+
+        // 1. 자산 신규 등록
+        async function handleAssetSubmit(e) {
+            e.preventDefault();
+            const category = document.getElementById('category').value;
+            const type = document.getElementById('type').value.trim().toUpperCase().replace(/\s+/g, '');
+            const spec = document.getElementById('spec').value.trim().toUpperCase().replace(/\s+/g, '');
+            const model = document.getElementById('model').value.trim();
+            const location = document.getElementById('location').value;
+            const startNum = parseInt(document.getElementById('startNum').value);
+            const count = parseInt(document.getElementById('count').value);
+
+            try {
+                for (let i = 0; i < count; i++) {
+                    const currentSeq = String(startNum + i).padStart(3, '0');
+                    let assetId = `${category}-${type}`;
+                    if (spec) assetId += `-${spec}`;
+                    assetId += `-${currentSeq}`;
+
+                    await window.addDoc(window.collection(window.db, "assets"), {
+                        assetId: assetId,
+                        category: category,
+                        type: type,
+                        spec: spec || '-',
+                        model: model || '-',
+                        status: '정상',
+                        location: location,
+                        createdAt: window.serverTimestamp()
+                    });
+                }
+                alert(`${count}개의 자산이 성공적으로 등록되었습니다.`);
+                document.getElementById('assetForm').reset();
+                loadAssets();
+            } catch (error) {
+                alert("등록 실패: " + error.message);
+            }
+        }
+
+        // 2. 자산 불러오기 및 목록 표시
+        async function loadAssets() {
+            const tableBody = document.getElementById('assetTableBody');
+            tableBody.innerHTML = `<tr><td colspan="6" class="p-4 text-center text-gray-500">불러오는 중...</td></tr>`;
+            try {
+                const querySnapshot = await window.getDocs(window.collection(window.db, "assets"));
+                allAssets = [];
+                querySnapshot.forEach((doc) => {
+                    allAssets.push({ id: doc.id, ...doc.data() });
+                });
+                renderTable(allAssets);
+            } catch (error) {
+                tableBody.innerHTML = `<tr><td colspan="6" class="p-4 text-center text-red-500">데이터 불러오기 실패</td></tr>`;
+            }
+        }
+
+        function renderTable(assets) {
+            const tableBody = document.getElementById('assetTableBody');
+            if (assets.length === 0) {
+                tableBody.innerHTML = `<tr><td colspan="6" class="p-4 text-center text-gray-500">등록된 자산이 없습니다.</td></tr>`;
+                return;
+            }
+            tableBody.innerHTML = assets.map(item => `
+                <tr class="hover:bg-gray-50">
+                    <td class="p-2 font-mono font-bold text-blue-800">${item.assetId}</td>
+                    <td class="p-2">${item.category} / ${item.type}</td>
+                    <td class="p-2">${item.spec}</td>
+                    <td class="p-2"><span class="bg-${item.status==='정상'?'green':'red'}-100 text-${item.status==='정상'?'green':'red'}-800 text-xs px-2 py-1 rounded font-bold">${item.status}</span></td>
+                    <td class="p-2">${item.location}</td>
+                    <td class="p-2 text-center">
+                        <button onclick="showQR('${item.assetId}', '${item.type}')" class="bg-gray-700 text-white text-xs px-2 py-1 rounded hover:bg-black">QR보기</button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function filterAssets() {
+            const keyword = document.getElementById('searchInput').value.toLowerCase();
+            const filtered = allAssets.filter(item => 
+                item.assetId.toLowerCase().includes(keyword) ||
+                item.type.toLowerCase().includes(keyword) ||
+                item.location.toLowerCase().includes(keyword)
+            );
+            renderTable(filtered);
+        }
+
+        // 3. QR 모달 열기
+        function showQR(assetId, type) {
+            document.getElementById('qrModalTitle').innerText = assetId;
+            document.getElementById('qrModalSub').innerText = `교회 음향팀 | ${type}`;
+            document.getElementById('qrcode').innerHTML = "";
+            new QRCode(document.getElementById("qrcode"), {
+                text: assetId,
+                width: 160,
+                height: 160
+            });
+            document.getElementById('qrModal').classList.remove('hidden');
+        }
+
+        function closeQRModal() {
+            document.getElementById('qrModal').classList.add('hidden');
+        }
+
+        // 4. QR 카메라 스캐너
+        function openScanner() {
+            document.getElementById('scannerModal').classList.remove('hidden');
+            html5QrcodeScanner = new Html5QrcodeScanner("reader", { fps: 10, qrbox: 250 });
+            html5QrcodeScanner.render(onScanSuccess, () => {});
+        }
+
+        function closeScanner() {
+            if (html5QrcodeScanner) {
+                html5QrcodeScanner.clear().catch(() => {});
+            }
+            document.getElementById('scannerModal').classList.add('hidden');
+        }
+
+        async function onScanSuccess(decodedText) {
+            closeScanner();
+            const asset = allAssets.find(a => a.assetId === decodedText.trim());
+            if (asset) {
+                openDetailModal(asset);
+            } else {
+                alert(`일치하는 자산을 찾을 수 없습니다:\n[${decodedText}]`);
+            }
+        }
+
+        // 5. 상세 보기 및 수정
+        function openDetailModal(asset) {
+            selectedDocId = asset.id;
+            document.getElementById('detailContent').innerHTML = `
+                <p><strong>관리번호:</strong> <span class="font-mono text-blue-800 font-bold">${asset.assetId}</span></p>
+                <p><strong>품목 / 규격:</strong> ${asset.category} / ${asset.type} (${asset.spec})</p>
+                <p><strong>현재 상태:</strong> <span class="font-bold text-blue-600">${asset.status}</span></p>
+                <p><strong>현재 위치:</strong> ${asset.location}</p>
+            `;
+            document.getElementById('editStatus').value = asset.status;
+            document.getElementById('editLocation').value = asset.location;
+            document.getElementById('detailModal').classList.remove('hidden');
+        }
+
+        function closeDetailModal() {
+            document.getElementById('detailModal').classList.add('hidden');
+        }
+
+        async function saveAssetChanges() {
+            if (!selectedDocId) return;
+            const newStatus = document.getElementById('editStatus').value;
+            const newLocation = document.getElementById('editLocation').value;
+
+            try {
+                const assetRef = window.doc(window.db, "assets", selectedDocId);
+                await window.updateDoc(assetRef, {
+                    status: newStatus,
+                    location: newLocation
+                });
+                alert("상태가 업데이트되었습니다.");
+                closeDetailModal();
+                loadAssets();
+            } catch (error) {
+                alert("저장 실패: " + error.message);
+            }
+        }
+
+        // 초기화
+        window.addEventListener('DOMContentLoaded', () => {
+            setTimeout(() => { if (window.db) loadAssets(); }, 1000);
+        });
+    </script>
+</body>
+</html>
