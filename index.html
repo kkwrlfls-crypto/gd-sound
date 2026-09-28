@@ -4,14 +4,18 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>GD Sound 장비 관리 시스템</title>
+  <!-- Tailwind CSS & QR Libraries -->
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
   <script src="https://unpkg.com/html5-qrcode"></script>
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
   <style>
     #reader video { object-fit: cover; width: 100% !important; border-radius: 0.75rem; }
   </style>
 </head>
-<body class="bg-slate-900 text-slate-100 min-h-screen">
+<body class="bg-slate-900 text-slate-100 min-h-screen pb-10">
   <div class="max-w-2xl mx-auto p-4 sm:p-6 space-y-6">
     
     <!-- 상단 헤더 -->
@@ -25,37 +29,80 @@
       </button>
     </header>
 
-    <!-- 장비 등록 폼 -->
-    <section class="bg-slate-800 p-5 rounded-2xl border border-slate-700 shadow-lg space-y-4">
-      <h2 class="text-sm font-semibold text-slate-300 flex items-center gap-2">
-        <span class="w-2 h-2 rounded-full bg-blue-400"></span> 신규 장비 / 케이블 등록
-      </h2>
-      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-        <input id="eqName" type="text" placeholder="장비/케이블명 (예: Canary XLR 5M)" class="bg-slate-900 border border-slate-700 rounded-xl px-3.5 py-2.5 text-sm text-slate-200 focus:outline-none focus:border-blue-500 transition">
-        <input id="eqCode" type="text" placeholder="관리번호 (예: CBL-XLR-001)" class="bg-slate-900 border border-slate-700 rounded-xl px-3.5 py-2.5 text-sm text-slate-200 focus:outline-none focus:border-blue-500 transition">
-        <input id="eqLocation" type="text" placeholder="보관 위치 (예: 자막실 케이블렉)" class="bg-slate-900 border border-slate-700 rounded-xl px-3.5 py-2.5 text-sm text-slate-200 focus:outline-none focus:border-blue-500 transition">
-        <select id="eqStatus" class="bg-slate-900 border border-slate-700 rounded-xl px-3.5 py-2.5 text-sm text-slate-200 focus:outline-none focus:border-blue-500 transition">
-          <option value="정상">상태: 정상</option>
-          <option value="수리필요">상태: 수리필요</option>
-          <option value="점검중">상태: 점검중</option>
-          <option value="폐기">상태: 폐기</option>
-        </select>
-      </div>
-      <button onclick="addEquipment()" class="w-full bg-blue-600 hover:bg-blue-500 text-white py-2.5 rounded-xl font-medium text-sm transition shadow-lg shadow-blue-900/30 active:scale-98">
-        장비 등록 & 데이터 저장
-      </button>
-    </section>
+    <!-- 메인 탭 메뉴 -->
+    <div class="flex bg-slate-800 p-1 rounded-xl border border-slate-700 text-sm font-medium">
+      <button id="tabBtn1" onclick="switchTab('inventory')" class="flex-1 py-2 rounded-lg bg-blue-600 text-white transition">장비 / 케이블 목록</button>
+      <button id="tabBtn2" onclick="switchTab('checkout')" class="flex-1 py-2 rounded-lg text-slate-400 hover:text-slate-200 transition">🚛 출고 / 반납 현황</button>
+    </div>
 
-    <!-- 검색 및 장비 목록 -->
-    <section class="space-y-3">
-      <div class="flex justify-between items-center px-1">
-        <h3 class="text-sm font-medium text-slate-400">등록된 장비 목록</h3>
-        <input id="searchInput" oninput="renderList()" type="text" placeholder="검색어 입력..." class="bg-slate-800 border border-slate-700 rounded-lg px-3 py-1 text-xs text-slate-200 focus:outline-none focus:border-blue-500 w-40">
-      </div>
-      <div id="equipmentList" class="space-y-3">
-        <!-- 동적 생성 카드 -->
-      </div>
-    </section>
+    <!-- TAB 1: 전체 장비 목록 & 등록 -->
+    <div id="tabInventory" class="space-y-6">
+      <!-- 장비 등록 폼 -->
+      <section class="bg-slate-800 p-5 rounded-2xl border border-slate-700 shadow-lg space-y-4">
+        <h2 class="text-sm font-semibold text-slate-300 flex items-center gap-2">
+          <span class="w-2 h-2 rounded-full bg-blue-400"></span> 신규 장비 / 케이블 등록
+        </h2>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <input id="eqName" type="text" placeholder="장비/케이블명 (예: Canary XLR 5M)" class="bg-slate-900 border border-slate-700 rounded-xl px-3.5 py-2.5 text-sm text-slate-200 focus:outline-none focus:border-blue-500 transition">
+          <input id="eqCode" type="text" placeholder="관리번호 (예: CBL-XLR-001)" class="bg-slate-900 border border-slate-700 rounded-xl px-3.5 py-2.5 text-sm text-slate-200 focus:outline-none focus:border-blue-500 transition">
+          <input id="eqLocation" type="text" placeholder="보관 위치 (예: 자막실 케이블렉)" class="bg-slate-900 border border-slate-700 rounded-xl px-3.5 py-2.5 text-sm text-slate-200 focus:outline-none focus:border-blue-500 transition">
+          <select id="eqStatus" class="bg-slate-900 border border-slate-700 rounded-xl px-3.5 py-2.5 text-sm text-slate-200 focus:outline-none focus:border-blue-500 transition">
+            <option value="정상">상태: 정상</option>
+            <option value="수리필요">상태: 수리필요</option>
+            <option value="점검중">상태: 점검중</option>
+            <option value="폐기">상태: 폐기</option>
+          </select>
+        </div>
+        <button onclick="addEquipment()" class="w-full bg-blue-600 hover:bg-blue-500 text-white py-2.5 rounded-xl font-medium text-sm transition shadow-lg shadow-blue-900/30 active:scale-98">
+          장비 등록 (실시간 동기화)
+        </button>
+      </section>
+
+      <!-- 검색 및 장비 목록 -->
+      <section class="space-y-3">
+        <div class="flex justify-between items-center px-1">
+          <h3 class="text-sm font-medium text-slate-400">등록된 전체 장비</h3>
+          <div class="flex gap-2">
+            <input id="searchInput" oninput="renderList()" type="text" placeholder="검색..." class="bg-slate-800 border border-slate-700 rounded-lg px-3 py-1 text-xs text-slate-200 focus:outline-none focus:border-blue-500 w-32">
+            <button onclick="exportToExcel()" class="bg-emerald-700 hover:bg-emerald-600 text-white text-xs px-2.5 py-1 rounded-lg font-medium transition">
+              📊 엑셀 내보내기
+            </button>
+          </div>
+        </div>
+        <div id="equipmentList" class="space-y-3"></div>
+      </section>
+    </div>
+
+    <!-- TAB 2: 출고 / 반납 현황 관리 -->
+    <div id="tabCheckout" class="space-y-6 hidden">
+      <section class="bg-slate-800 p-5 rounded-2xl border border-slate-700 shadow-lg space-y-4">
+        <h2 class="text-sm font-semibold text-amber-400 flex items-center gap-2">
+          <span>📋</span> 행사 및 출고 정보 설정
+        </h2>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs text-slate-400 mb-1">행사명 / 사용 목적</label>
+            <input id="eventName" type="text" placeholder="예: 주일 3부 예배 / 야외 수련회" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3.5 py-2.5 text-sm text-slate-200 focus:outline-none focus:border-blue-500">
+          </div>
+          <div>
+            <label class="block text-xs text-slate-400 mb-1">출고 날짜</label>
+            <input id="eventDate" type="date" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3.5 py-2.5 text-sm text-slate-200 focus:outline-none focus:border-blue-500">
+          </div>
+        </div>
+        <p class="text-xs text-slate-400">💡 상단 <span class="text-emerald-400 font-semibold">[📷 QR 스캔]</span> 버튼을 눌러 스캔한 장비들이 아래 출고 목록에 자동으로 들어옵니다.</p>
+      </section>
+
+      <!-- 현재 출고 처리 중인 리스트 -->
+      <section class="space-y-3">
+        <div class="flex justify-between items-center px-1">
+          <h3 class="text-sm font-medium text-amber-400">현재 출고 목록 (<span id="checkoutCount">0</span>개)</h3>
+          <button onclick="exportCheckoutToExcel()" class="bg-amber-600 hover:bg-amber-500 text-white text-xs px-2.5 py-1 rounded-lg font-medium transition">
+            📄 출고 명세서 엑셀 다운로드
+          </button>
+        </div>
+        <div id="checkoutList" class="space-y-3"></div>
+      </section>
+    </div>
 
   </div>
 
@@ -78,17 +125,94 @@
   <div id="scannerModal" class="fixed inset-0 bg-slate-950/90 backdrop-blur-md hidden flex flex-col items-center justify-center p-4 z-50">
     <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 w-full max-w-sm text-center space-y-4 shadow-2xl">
       <div class="flex justify-between items-center border-b border-slate-800 pb-3">
-        <h3 class="font-bold text-slate-200 text-sm">QR 코드 스캐너</h3>
+        <h3 class="font-bold text-slate-200 text-sm">QR 스캔 (출고/조회)</h3>
         <button onclick="closeScanner()" class="text-slate-500 hover:text-slate-300 font-bold px-2 text-xl">&times;</button>
       </div>
       <div id="reader" class="w-full bg-slate-950 rounded-xl overflow-hidden min-h-[250px] border border-slate-800"></div>
-      <p class="text-xs text-slate-500">작은 라벨은 15~20cm 거리를 두고 촬영해주세요.</p>
+      <p class="text-xs text-slate-500">스캔 시 해당 장비가 '출고 목록'으로 자동 이동합니다.</p>
     </div>
   </div>
 
   <script>
+    // -----------------------------------------------------------------
+    // 1. Firebase 초기화 설정 (Firebase 콘솔의 내 키 값으로 교체하는 부분)
+    // -----------------------------------------------------------------
+    const firebaseConfig = {
+  apiKey: "AIzaSyAT9O5kaYX60FAlioXJgU0LBi4xAujaOiM",
+  authDomain: "gd-sound.firebaseapp.com",
+  projectId: "gd-sound",
+  storageBucket: "gd-sound.firebasestorage.app",
+  messagingSenderId: "1031733562702",
+  appId: "1:1031733562702:web:fa8b25f845d50622a2e21f"
+};
+
+    let db = null;
+    let isFirebaseReady = false;
+    
+    if (firebaseConfig.apiKey !== "YOUR_API_KEY") {
+      firebase.initializeApp(firebaseConfig);
+      db = firebase.firestore();
+      isFirebaseReady = true;
+    }
+
+    let equipmentData = [];
     let html5QrcodeScanner = null;
-    let equipmentData = JSON.parse(localStorage.getItem('gd_sound_eq_v2') || '[]');
+
+    document.getElementById('eventDate').valueAsDate = new Date();
+
+    function loadData() {
+      if (isFirebaseReady) {
+        db.collection("equipments").onSnapshot((snapshot) => {
+          equipmentData = [];
+          snapshot.forEach((doc) => {
+            equipmentData.push({ id: doc.id, ...doc.data() });
+          });
+          renderList();
+          renderCheckoutList();
+        });
+      } else {
+        equipmentData = JSON.parse(localStorage.getItem('gd_sound_db') || '[]');
+        renderList();
+        renderCheckoutList();
+      }
+    }
+
+    function switchTab(tab) {
+      if (tab === 'inventory') {
+        document.getElementById('tabInventory').classList.remove('hidden');
+        document.getElementById('tabCheckout').classList.add('hidden');
+        document.getElementById('tabBtn1').className = "flex-1 py-2 rounded-lg bg-blue-600 text-white transition";
+        document.getElementById('tabBtn2').className = "flex-1 py-2 rounded-lg text-slate-400 hover:text-slate-200 transition";
+      } else {
+        document.getElementById('tabInventory').classList.add('hidden');
+        document.getElementById('tabCheckout').classList.remove('hidden');
+        document.getElementById('tabBtn1').className = "flex-1 py-2 rounded-lg text-slate-400 hover:text-slate-200 transition";
+        document.getElementById('tabBtn2').className = "flex-1 py-2 rounded-lg bg-amber-600 text-white transition";
+      }
+    }
+
+    function addEquipment() {
+      const name = document.getElementById('eqName').value.trim();
+      const code = document.getElementById('eqCode').value.trim();
+      const location = document.getElementById('eqLocation').value.trim();
+      const status = document.getElementById('eqStatus').value;
+
+      if (!name || !code) return alert('장비 이름과 관리번호는 필수입니다.');
+
+      const newItem = { name, code, location, status, isCheckedOut: false, eventName: '', checkoutDate: '' };
+
+      if (isFirebaseReady) {
+        db.collection("equipments").doc(code).set(newItem);
+      } else {
+        equipmentData.unshift(newItem);
+        localStorage.setItem('gd_sound_db', JSON.stringify(equipmentData));
+        renderList();
+      }
+
+      document.getElementById('eqName').value = '';
+      document.getElementById('eqCode').value = '';
+      document.getElementById('eqLocation').value = '';
+    }
 
     function renderList() {
       const container = document.getElementById('equipmentList');
@@ -101,32 +225,27 @@
         (eq.location && eq.location.toLowerCase().includes(keyword))
       );
 
-      if (filtered.length === 0) {
-        container.innerHTML = `<div class="text-center py-8 text-xs text-slate-500">등록된 장비가 없습니다.</div>`;
-        return;
-      }
-
-      filtered.forEach((eq, idx) => {
-        const badgeColor = eq.status === '정상' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : 
-                           eq.status === '수리필요' ? 'bg-rose-500/10 text-rose-400 border-rose-500/20' : 'bg-amber-500/10 text-amber-400 border-amber-500/20';
+      filtered.forEach((eq) => {
+        const badgeColor = eq.isCheckedOut ? 'bg-amber-500/20 text-amber-400 border-amber-500/30' :
+                           eq.status === '정상' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : 'bg-rose-500/10 text-rose-400 border-rose-500/20';
 
         const card = document.createElement('div');
-        card.className = 'bg-slate-800/60 border border-slate-700/60 p-4 rounded-xl shadow flex justify-between items-center hover:border-slate-600 transition';
+        card.className = 'bg-slate-800/60 border border-slate-700/60 p-4 rounded-xl shadow flex justify-between items-center';
         card.innerHTML = `
           <div class="space-y-1">
             <div class="flex items-center gap-2">
               <span class="font-bold text-slate-200 text-sm">${eq.name}</span>
-              <span class="text-[10px] px-2 py-0.5 rounded-full border ${badgeColor}">${eq.status}</span>
+              <span class="text-[10px] px-2 py-0.5 rounded-full border ${badgeColor}">${eq.isCheckedOut ? '출고중' : eq.status}</span>
             </div>
             <div class="text-xs font-mono text-slate-400">${eq.code}</div>
             <div class="text-xs text-slate-500">📍 ${eq.location || '위치 미지정'}</div>
           </div>
           <div class="flex gap-2">
-            <button onclick="showQR('${eq.name}', '${eq.code}')" class="bg-slate-700 hover:bg-slate-600 text-slate-200 text-xs px-3 py-2 rounded-lg font-medium transition border border-slate-600">
-              QR 보기
+            <button onclick="showQR('${eq.name}', '${eq.code}')" class="bg-slate-700 hover:bg-slate-600 text-slate-200 text-xs px-3 py-2 rounded-lg border border-slate-600">
+              QR
             </button>
-            <button onclick="deleteEq('${eq.code}')" class="bg-slate-800 hover:bg-rose-900/30 text-slate-500 hover:text-rose-400 text-xs px-2 py-2 rounded-lg transition border border-slate-700">
-              삭제
+            <button onclick="toggleCheckout('${eq.code}')" class="text-xs px-3 py-2 rounded-lg font-medium border ${eq.isCheckedOut ? 'bg-amber-900/40 text-amber-300 border-amber-700' : 'bg-slate-800 text-slate-400 border-slate-700'}">
+              ${eq.isCheckedOut ? '반납' : '출고'}
             </button>
           </div>
         `;
@@ -134,28 +253,110 @@
       });
     }
 
-    function addEquipment() {
-      const name = document.getElementById('eqName').value.trim();
-      const code = document.getElementById('eqCode').value.trim();
-      const location = document.getElementById('eqLocation').value.trim();
-      const status = document.getElementById('eqStatus').value;
+    function renderCheckoutList() {
+      const container = document.getElementById('checkoutList');
+      container.innerHTML = '';
+      const checkedOutItems = equipmentData.filter(e => e.isCheckedOut);
+      document.getElementById('checkoutCount').innerText = checkedOutItems.length;
 
-      if (!name || !code) return alert('장비 이름과 관리번호는 필수입니다.');
+      if (checkedOutItems.length === 0) {
+        container.innerHTML = `<div class="text-center py-8 text-xs text-slate-500">현재 출고된 장비가 없습니다. 스캔하여 출고해보세요!</div>`;
+        return;
+      }
 
-      equipmentData.unshift({ name, code, location, status });
-      localStorage.setItem('gd_sound_eq_v2', JSON.stringify(equipmentData));
-      
-      document.getElementById('eqName').value = '';
-      document.getElementById('eqCode').value = '';
-      document.getElementById('eqLocation').value = '';
-      renderList();
+      checkedOutItems.forEach(eq => {
+        const card = document.createElement('div');
+        card.className = 'bg-slate-800 border border-amber-500/30 p-4 rounded-xl flex justify-between items-center';
+        card.innerHTML = `
+          <div>
+            <div class="font-bold text-slate-100 text-sm">${eq.name} <span class="text-xs font-normal text-amber-400">(${eq.code})</span></div>
+            <div class="text-xs text-slate-400 mt-1">🗓️ 행사: ${eq.eventName || '미지정'} | 날짜: ${eq.checkoutDate || '미지정'}</div>
+          </div>
+          <button onclick="toggleCheckout('${eq.code}')" class="bg-emerald-600 hover:bg-emerald-500 text-white text-xs px-3 py-1.5 rounded-lg font-medium shadow">
+            반납하기
+          </button>
+        `;
+        container.appendChild(card);
+      });
     }
 
-    function deleteEq(code) {
-      if (!confirm('정말 삭제하시겠습니까?')) return;
-      equipmentData = equipmentData.filter(e => e.code !== code);
-      localStorage.setItem('gd_sound_eq_v2', JSON.stringify(equipmentData));
-      renderList();
+    function toggleCheckout(code) {
+      const item = equipmentData.find(e => e.code === code);
+      if (!item) return;
+
+      const eventName = document.getElementById('eventName').value || '기본 행사';
+      const eventDate = document.getElementById('eventDate').value || new Date().toISOString().split('T')[0];
+
+      const newStatus = !item.isCheckedOut;
+      const updateData = {
+        isCheckedOut: newStatus,
+        eventName: newStatus ? eventName : '',
+        checkoutDate: newStatus ? eventDate : ''
+      };
+
+      if (isFirebaseReady) {
+        db.collection("equipments").doc(code).update(updateData);
+      } else {
+        Object.assign(item, updateData);
+        localStorage.setItem('gd_sound_db', JSON.stringify(equipmentData));
+        renderList();
+        renderCheckoutList();
+      }
+    }
+
+    function openScanner() {
+      document.getElementById('scannerModal').classList.remove('hidden');
+      if (!html5QrcodeScanner) html5QrcodeScanner = new Html5Qrcode("reader");
+
+      const config = { fps: 15, qrbox: { width: 220, height: 220 }, videoConstraints: { facingMode: "environment", focusMode: "continuous" } };
+
+      html5QrcodeScanner.start({ facingMode: "environment" }, config, (decodedText) => {
+        const item = equipmentData.find(e => e.code === decodedText);
+        if (item) {
+          toggleCheckout(item.code);
+          alert(`[${item.name}] 장비가 ${item.isCheckedOut ? '반납' : '출고'} 처리되었습니다!`);
+        } else {
+          alert(`등록되지 않은 관리번호입니다: ${decodedText}`);
+        }
+        closeScanner();
+      }, () => {}).catch(() => closeScanner());
+    }
+
+    function closeScanner() {
+      if (html5QrcodeScanner && html5QrcodeScanner.isScanning) {
+        html5QrcodeScanner.stop().then(() => document.getElementById('scannerModal').classList.add('hidden'));
+      } else {
+        document.getElementById('scannerModal').classList.add('hidden');
+      }
+    }
+
+    function exportToExcel() {
+      let csv = "\uFEFF장비명,관리번호,보관위치,상태,출고여부,행사명,출고일자\n";
+      equipmentData.forEach(e => {
+        csv += `"${e.name}","${e.code}","${e.location || ''}","${e.status}","${e.isCheckedOut ? '출고중' : '보관중'}","${e.eventName || ''}","${e.checkoutDate || ''}"\n`;
+      });
+      downloadCSV(csv, `GD_Sound_장비전체목록_${new Date().toISOString().split('T')[0]}.csv`);
+    }
+
+    function exportCheckoutToExcel() {
+      const checkedOut = equipmentData.filter(e => e.isCheckedOut);
+      if (checkedOut.length === 0) return alert('출고된 장비가 없습니다.');
+
+      let csv = "\uFEFF행사명,출고일자,장비명,관리번호,보관위치\n";
+      checkedOut.forEach(e => {
+        csv += `"${e.eventName}","${e.checkoutDate}","${e.name}","${e.code}","${e.location || ''}"\n`;
+      });
+      downloadCSV(csv, `GD_Sound_출고명세서_${new Date().toISOString().split('T')[0]}.csv`);
+    }
+
+    function downloadCSV(csv, filename) {
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement("a");
+      link.href = URL.createObjectURL(blob);
+      link.setAttribute("download", filename);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
     }
 
     function showQR(name, code) {
@@ -163,15 +364,7 @@
       document.getElementById('qrModalCode').innerText = code;
       const qrContainer = document.getElementById('qrcode');
       qrContainer.innerHTML = '';
-
-      // 초점 극대화를 위한 L레벨 패턴 최소화 적용
-      new QRCode(qrContainer, {
-        text: code,
-        width: 160,
-        height: 160,
-        correctLevel: QRCode.CorrectLevel.L
-      });
-
+      new QRCode(qrContainer, { text: code, width: 160, height: 160, correctLevel: QRCode.CorrectLevel.L });
       document.getElementById('qrModal').classList.remove('hidden');
     }
 
@@ -179,52 +372,7 @@
       document.getElementById('qrModal').classList.add('hidden');
     }
 
-    function openScanner() {
-      document.getElementById('scannerModal').classList.remove('hidden');
-
-      if (!html5QrcodeScanner) {
-        html5QrcodeScanner = new Html5Qrcode("reader");
-      }
-
-      const config = { 
-        fps: 15, 
-        qrbox: { width: 220, height: 220 },
-        videoConstraints: {
-          facingMode: "environment",
-          focusMode: "continuous"
-        }
-      };
-
-      html5QrcodeScanner.start(
-        { facingMode: "environment" },
-        config,
-        (decodedText) => {
-          const found = equipmentData.find(e => e.code === decodedText);
-          if (found) {
-            alert(`[장비 확인 완료]\n이름: ${found.name}\n코드: ${found.code}\n위치: ${found.location || '미지정'}\n상태: ${found.status}`);
-          } else {
-            alert(`스캔 성공!\n등록되지 않은 코드입니다: ${decodedText}`);
-          }
-          closeScanner();
-        },
-        () => {}
-      ).catch(err => {
-        alert('카메라 권한을 확인해주세요.');
-        closeScanner();
-      });
-    }
-
-    function closeScanner() {
-      if (html5QrcodeScanner && html5QrcodeScanner.isScanning) {
-        html5QrcodeScanner.stop().then(() => {
-          document.getElementById('scannerModal').classList.add('hidden');
-        });
-      } else {
-        document.getElementById('scannerModal').classList.add('hidden');
-      }
-    }
-
-    renderList();
+    loadData();
   </script>
 </body>
 </html>
