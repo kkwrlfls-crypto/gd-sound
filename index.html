@@ -3,89 +3,132 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>GD Sound 장비 관리</title>
-  <!-- Tailwind CSS & QR Code / Scanner Libraries -->
+  <title>GD Sound 장비 관리 시스템</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
   <script src="https://unpkg.com/html5-qrcode"></script>
   <style>
-    #reader video { object-fit: cover; width: 100% !important; border-radius: 0.5rem; }
+    #reader video { object-fit: cover; width: 100% !important; border-radius: 0.75rem; }
   </style>
 </head>
-<body class="bg-gray-100 min-h-screen text-gray-800">
-  <div class="max-w-md mx-auto p-4">
-    <!-- Header -->
-    <header class="bg-slate-800 text-white p-4 rounded-xl shadow-lg mb-4 flex justify-between items-center">
-      <h1 class="text-xl font-bold tracking-wide">GD Sound 장비 관리</h1>
-      <button onclick="openScanner()" class="bg-emerald-500 hover:bg-emerald-600 text-white font-semibold px-3 py-1.5 rounded-lg text-sm flex items-center gap-1 shadow">
-        📷 QR 스캔
+<body class="bg-slate-900 text-slate-100 min-h-screen">
+  <div class="max-w-2xl mx-auto p-4 sm:p-6 space-y-6">
+    
+    <!-- 상단 헤더 -->
+    <header class="flex justify-between items-center bg-slate-800/80 backdrop-blur p-4 rounded-2xl border border-slate-700 shadow-xl">
+      <div>
+        <h1 class="text-xl font-bold bg-gradient-to-r from-blue-400 to-emerald-400 bg-clip-text text-transparent">GD Sound System</h1>
+        <p class="text-xs text-slate-400 mt-0.5">교회 음향 장비 & 케이블 관리자</p>
+      </div>
+      <button onclick="openScanner()" class="bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white font-semibold px-4 py-2 rounded-xl text-sm shadow-lg shadow-emerald-900/30 flex items-center gap-2 transition-all active:scale-95">
+        <span>📷</span> QR 스캔
       </button>
     </header>
 
-    <!-- Main Content / Equipment List -->
-    <main class="space-y-4">
-      <div class="bg-white p-4 rounded-xl shadow">
-        <h2 class="text-lg font-semibold mb-2">장비 목록 및 QR 생성</h2>
-        <div class="space-y-2 mb-4">
-          <input id="eqName" type="text" placeholder="장비/케이블 이름 (예: XLR 3M)" class="w-full p-2 border rounded-lg text-sm">
-          <input id="eqCode" type="text" placeholder="관리번호 (예: CBL-XLR-3M-001)" class="w-full p-2 border rounded-lg text-sm">
-          <button onclick="addEquipment()" class="w-full bg-blue-600 text-white py-2 rounded-lg font-medium text-sm hover:bg-blue-700">
-            장비 등록 & QR 생성
-          </button>
-        </div>
+    <!-- 장비 등록 폼 -->
+    <section class="bg-slate-800 p-5 rounded-2xl border border-slate-700 shadow-lg space-y-4">
+      <h2 class="text-sm font-semibold text-slate-300 flex items-center gap-2">
+        <span class="w-2 h-2 rounded-full bg-blue-400"></span> 신규 장비 / 케이블 등록
+      </h2>
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <input id="eqName" type="text" placeholder="장비/케이블명 (예: Canary XLR 5M)" class="bg-slate-900 border border-slate-700 rounded-xl px-3.5 py-2.5 text-sm text-slate-200 focus:outline-none focus:border-blue-500 transition">
+        <input id="eqCode" type="text" placeholder="관리번호 (예: CBL-XLR-001)" class="bg-slate-900 border border-slate-700 rounded-xl px-3.5 py-2.5 text-sm text-slate-200 focus:outline-none focus:border-blue-500 transition">
+        <input id="eqLocation" type="text" placeholder="보관 위치 (예: 자막실 케이블렉)" class="bg-slate-900 border border-slate-700 rounded-xl px-3.5 py-2.5 text-sm text-slate-200 focus:outline-none focus:border-blue-500 transition">
+        <select id="eqStatus" class="bg-slate-900 border border-slate-700 rounded-xl px-3.5 py-2.5 text-sm text-slate-200 focus:outline-none focus:border-blue-500 transition">
+          <option value="정상">상태: 정상</option>
+          <option value="수리필요">상태: 수리필요</option>
+          <option value="점검중">상태: 점검중</option>
+          <option value="폐기">상태: 폐기</option>
+        </select>
       </div>
+      <button onclick="addEquipment()" class="w-full bg-blue-600 hover:bg-blue-500 text-white py-2.5 rounded-xl font-medium text-sm transition shadow-lg shadow-blue-900/30 active:scale-98">
+        장비 등록 & 데이터 저장
+      </button>
+    </section>
 
-      <!-- Equipment Table/Cards -->
+    <!-- 검색 및 장비 목록 -->
+    <section class="space-y-3">
+      <div class="flex justify-between items-center px-1">
+        <h3 class="text-sm font-medium text-slate-400">등록된 장비 목록</h3>
+        <input id="searchInput" oninput="renderList()" type="text" placeholder="검색어 입력..." class="bg-slate-800 border border-slate-700 rounded-lg px-3 py-1 text-xs text-slate-200 focus:outline-none focus:border-blue-500 w-40">
+      </div>
       <div id="equipmentList" class="space-y-3">
-        <!-- 등록된 장비들이 여기에 표시됩니다 -->
+        <!-- 동적 생성 카드 -->
       </div>
-    </main>
+    </section>
 
-    <!-- Modal: QR View -->
-    <div id="qrModal" class="fixed inset-0 bg-black/60 hidden flex items-center justify-center p-4 z-50">
-      <div class="bg-white rounded-xl p-6 w-full max-w-xs text-center space-y-4 shadow-2xl">
-        <h3 id="qrModalTitle" class="font-bold text-lg"></h3>
-        <div id="qrcode" class="flex justify-center my-2"></div>
-        <p id="qrModalCode" class="text-sm font-mono text-gray-500"></p>
-        <div class="flex gap-2">
-          <button onclick="printQR()" class="flex-1 bg-gray-800 text-white py-2 rounded-lg text-sm font-medium">인쇄</button>
-          <button onclick="closeQRModal()" class="flex-1 bg-gray-200 text-gray-700 py-2 rounded-lg text-sm font-medium">닫기</button>
-        </div>
+  </div>
+
+  <!-- Modal: QR View -->
+  <div id="qrModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm hidden flex items-center justify-center p-4 z-50">
+    <div class="bg-slate-800 border border-slate-700 rounded-2xl p-6 w-full max-w-xs text-center space-y-4 shadow-2xl">
+      <h3 id="qrModalTitle" class="font-bold text-lg text-slate-100"></h3>
+      <div class="p-3 bg-white rounded-xl inline-block shadow-inner">
+        <div id="qrcode"></div>
+      </div>
+      <p id="qrModalCode" class="text-xs font-mono text-slate-400"></p>
+      <div class="flex gap-2">
+        <button onclick="window.print()" class="flex-1 bg-slate-700 hover:bg-slate-600 text-slate-200 py-2 rounded-xl text-xs font-medium transition">인쇄하기</button>
+        <button onclick="closeQRModal()" class="flex-1 bg-slate-900 hover:bg-slate-950 text-slate-400 py-2 rounded-xl text-xs font-medium transition">닫기</button>
       </div>
     </div>
+  </div>
 
-    <!-- Modal: Scanner -->
-    <div id="scannerModal" class="fixed inset-0 bg-black/80 hidden flex flex-col items-center justify-center p-4 z-50">
-      <div class="bg-white rounded-xl p-4 w-full max-w-sm text-center space-y-3">
-        <div class="flex justify-between items-center border-b pb-2">
-          <h3 class="font-bold text-gray-800">QR 코드 스캔</h3>
-          <button onclick="closeScanner()" class="text-gray-500 font-bold px-2 text-xl">&times;</button>
-        </div>
-        <div id="reader" class="w-full bg-black rounded-lg overflow-hidden min-h-[250px]"></div>
-        <p class="text-xs text-gray-500">작은 QR은 15~20cm 거리에서 카메라를 비춰주세요.</p>
+  <!-- Modal: Scanner -->
+  <div id="scannerModal" class="fixed inset-0 bg-slate-950/90 backdrop-blur-md hidden flex flex-col items-center justify-center p-4 z-50">
+    <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 w-full max-w-sm text-center space-y-4 shadow-2xl">
+      <div class="flex justify-between items-center border-b border-slate-800 pb-3">
+        <h3 class="font-bold text-slate-200 text-sm">QR 코드 스캐너</h3>
+        <button onclick="closeScanner()" class="text-slate-500 hover:text-slate-300 font-bold px-2 text-xl">&times;</button>
       </div>
+      <div id="reader" class="w-full bg-slate-950 rounded-xl overflow-hidden min-h-[250px] border border-slate-800"></div>
+      <p class="text-xs text-slate-500">작은 라벨은 15~20cm 거리를 두고 촬영해주세요.</p>
     </div>
   </div>
 
   <script>
     let html5QrcodeScanner = null;
-    let equipmentData = JSON.parse(localStorage.getItem('gd_sound_eq') || '[]');
+    let equipmentData = JSON.parse(localStorage.getItem('gd_sound_eq_v2') || '[]');
 
     function renderList() {
       const container = document.getElementById('equipmentList');
+      const keyword = document.getElementById('searchInput')?.value.toLowerCase() || '';
       container.innerHTML = '';
-      equipmentData.forEach((eq, idx) => {
+
+      const filtered = equipmentData.filter(eq => 
+        eq.name.toLowerCase().includes(keyword) || 
+        eq.code.toLowerCase().includes(keyword) ||
+        (eq.location && eq.location.toLowerCase().includes(keyword))
+      );
+
+      if (filtered.length === 0) {
+        container.innerHTML = `<div class="text-center py-8 text-xs text-slate-500">등록된 장비가 없습니다.</div>`;
+        return;
+      }
+
+      filtered.forEach((eq, idx) => {
+        const badgeColor = eq.status === '정상' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : 
+                           eq.status === '수리필요' ? 'bg-rose-500/10 text-rose-400 border-rose-500/20' : 'bg-amber-500/10 text-amber-400 border-amber-500/20';
+
         const card = document.createElement('div');
-        card.className = 'bg-white p-4 rounded-xl shadow flex justify-between items-center';
+        card.className = 'bg-slate-800/60 border border-slate-700/60 p-4 rounded-xl shadow flex justify-between items-center hover:border-slate-600 transition';
         card.innerHTML = `
-          <div>
-            <div class="font-bold text-gray-800">${eq.name}</div>
-            <div class="text-xs font-mono text-gray-500">${eq.code}</div>
-            <span class="inline-block mt-1 text-xs px-2 py-0.5 rounded-full ${eq.status === '정상' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}">${eq.status || '정상'}</span>
+          <div class="space-y-1">
+            <div class="flex items-center gap-2">
+              <span class="font-bold text-slate-200 text-sm">${eq.name}</span>
+              <span class="text-[10px] px-2 py-0.5 rounded-full border ${badgeColor}">${eq.status}</span>
+            </div>
+            <div class="text-xs font-mono text-slate-400">${eq.code}</div>
+            <div class="text-xs text-slate-500">📍 ${eq.location || '위치 미지정'}</div>
           </div>
-          <button onclick="showQR('${eq.name}', '${eq.code}')" class="bg-slate-100 text-slate-700 text-xs px-3 py-2 rounded-lg font-medium border hover:bg-slate-200">
-            QR 보기
-          </button>
+          <div class="flex gap-2">
+            <button onclick="showQR('${eq.name}', '${eq.code}')" class="bg-slate-700 hover:bg-slate-600 text-slate-200 text-xs px-3 py-2 rounded-lg font-medium transition border border-slate-600">
+              QR 보기
+            </button>
+            <button onclick="deleteEq('${eq.code}')" class="bg-slate-800 hover:bg-rose-900/30 text-slate-500 hover:text-rose-400 text-xs px-2 py-2 rounded-lg transition border border-slate-700">
+              삭제
+            </button>
+          </div>
         `;
         container.appendChild(card);
       });
@@ -94,12 +137,24 @@
     function addEquipment() {
       const name = document.getElementById('eqName').value.trim();
       const code = document.getElementById('eqCode').value.trim();
-      if (!name || !code) return alert('이름과 관리번호를 모두 입력해주세요.');
+      const location = document.getElementById('eqLocation').value.trim();
+      const status = document.getElementById('eqStatus').value;
+
+      if (!name || !code) return alert('장비 이름과 관리번호는 필수입니다.');
+
+      equipmentData.unshift({ name, code, location, status });
+      localStorage.setItem('gd_sound_eq_v2', JSON.stringify(equipmentData));
       
-      equipmentData.push({ name, code, status: '정상' });
-      localStorage.setItem('gd_sound_eq', JSON.stringify(equipmentData));
       document.getElementById('eqName').value = '';
       document.getElementById('eqCode').value = '';
+      document.getElementById('eqLocation').value = '';
+      renderList();
+    }
+
+    function deleteEq(code) {
+      if (!confirm('정말 삭제하시겠습니까?')) return;
+      equipmentData = equipmentData.filter(e => e.code !== code);
+      localStorage.setItem('gd_sound_eq_v2', JSON.stringify(equipmentData));
       renderList();
     }
 
@@ -108,15 +163,15 @@
       document.getElementById('qrModalCode').innerText = code;
       const qrContainer = document.getElementById('qrcode');
       qrContainer.innerHTML = '';
-      
-      // QR 생성 설정: CorrectLevel.L (7% 복원율) -> 격자 패턴을 최소화하여 작은 크기에서도 자동 초점 인식률 극대화
+
+      // 초점 극대화를 위한 L레벨 패턴 최소화 적용
       new QRCode(qrContainer, {
         text: code,
-        width: 180,
-        height: 180,
+        width: 160,
+        height: 160,
         correctLevel: QRCode.CorrectLevel.L
       });
-      
+
       document.getElementById('qrModal').classList.remove('hidden');
     }
 
@@ -126,12 +181,11 @@
 
     function openScanner() {
       document.getElementById('scannerModal').classList.remove('hidden');
-      
+
       if (!html5QrcodeScanner) {
         html5QrcodeScanner = new Html5Qrcode("reader");
       }
 
-      // 스마트폰 고화질/연속 초점 최적화 설정
       const config = { 
         fps: 15, 
         qrbox: { width: 220, height: 220 },
@@ -145,12 +199,17 @@
         { facingMode: "environment" },
         config,
         (decodedText) => {
-          alert('스캔 성공! 관리번호: ' + decodedText);
+          const found = equipmentData.find(e => e.code === decodedText);
+          if (found) {
+            alert(`[장비 확인 완료]\n이름: ${found.name}\n코드: ${found.code}\n위치: ${found.location || '미지정'}\n상태: ${found.status}`);
+          } else {
+            alert(`스캔 성공!\n등록되지 않은 코드입니다: ${decodedText}`);
+          }
           closeScanner();
         },
-        (errorMessage) => { /* 연속 스캔 실패 무시 */ }
+        () => {}
       ).catch(err => {
-        alert('카메라를 열 수 없습니다. 권한 설정을 확인해 주세요.');
+        alert('카메라 권한을 확인해주세요.');
         closeScanner();
       });
     }
@@ -163,10 +222,6 @@
       } else {
         document.getElementById('scannerModal').classList.add('hidden');
       }
-    }
-
-    function printQR() {
-      window.print();
     }
 
     renderList();
