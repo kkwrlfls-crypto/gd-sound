@@ -13,6 +13,11 @@
   <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
   <style>
     #reader video { object-fit: cover; width: 100% !important; border-radius: 0.75rem; }
+    /* 달력 아이콘 색상 및 스타일 다크모드 최적화 */
+    input[type="date"]::-webkit-calendar-picker-indicator {
+      filter: invert(1);
+      cursor: pointer;
+    }
     @media print {
       body * { visibility: hidden; }
       #printArea, #printArea * { visibility: visible; }
@@ -89,7 +94,7 @@
             <input id="eqQty" type="number" value="1" min="1" placeholder="수량" class="w-full bg-transparent text-sm text-slate-200 focus:outline-none font-bold">
           </div>
 
-          <!-- 커스텀 사진 업로드 (가로 정렬 및 문구 정리) -->
+          <!-- 커스텀 사진 업로드 -->
           <div class="flex items-center bg-slate-900 border border-slate-700 rounded-xl px-3.5 py-2">
             <label for="eqImage" class="cursor-pointer flex items-center justify-between w-full">
               <span id="imageLabel" class="text-xs text-slate-400 whitespace-nowrap">📷 사진 첨부</span>
@@ -131,8 +136,8 @@
             <input id="eventName" type="text" placeholder="예: 주일 3부 예배 / 야외 수련회" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3.5 py-2.5 text-sm text-slate-200 focus:outline-none focus:border-blue-500">
           </div>
           <div>
-            <label class="block text-xs text-slate-400 mb-1">출고 날짜</label>
-            <input id="eventDate" type="date" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3.5 py-2.5 text-sm text-slate-200 focus:outline-none focus:border-blue-500">
+            <label class="block text-xs text-slate-400 mb-1">출고 날짜 (달력 선택)</label>
+            <input id="eventDate" type="date" onclick="this.showPicker && this.showPicker()" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3.5 py-2.5 text-sm text-slate-200 focus:outline-none focus:border-blue-500 cursor-pointer">
           </div>
         </div>
         <p class="text-xs text-slate-400">💡 상단 <span class="text-emerald-400 font-semibold">[📷 QR 스캔]</span> 버튼을 눌러 스캔한 장비들이 아래 출고 목록에 자동으로 들어옵니다.</p>
@@ -143,7 +148,7 @@
         <div class="flex justify-between items-center px-1">
           <h3 class="text-sm font-medium text-amber-400">현재 출고 목록 (<span id="checkoutCount">0</span>개)</h3>
           <button onclick="exportCheckoutToExcel()" class="bg-amber-600 hover:bg-amber-500 text-white text-xs px-2.5 py-1 rounded-lg font-medium transition">
-            📄 출고 명세서 엑셀 다운로드
+            📄 출고 장비 리스트 다운로드
           </button>
         </div>
         <div id="checkoutList" class="space-y-3"></div>
@@ -539,7 +544,7 @@
       checkedOut.forEach(e => {
         csv += `"${e.eventName}","${e.checkoutDate}","${e.mainCategory || '기타'}","${e.subCategory || '기타'}","${e.name}","${e.quantity || 1}","${e.code}","${e.location || '방송실'}"\n`;
       });
-      downloadCSV(csv, `GD_Sound_출고명세서_${new Date().toISOString().split('T')[0]}.csv`);
+      downloadCSV(csv, `GD_Sound_출고리스트_${new Date().toISOString().split('T')[0]}.csv`);
     }
 
     function downloadCSV(csv, filename) {
