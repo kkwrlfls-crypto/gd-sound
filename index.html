@@ -51,53 +51,56 @@
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <!-- 대분류 선택 -->
           <select id="mainCategory" onchange="updateSubCategory()" class="bg-slate-900 border border-slate-700 rounded-xl px-3.5 py-2.5 text-sm text-slate-200 focus:outline-none focus:border-blue-500 transition">
-            <option value="콘솔">카테고리(대): 🎛️ 콘솔</option>
-            <option value="스피커">카테고리(대): 🔊 스피커</option>
-            <option value="마이크">카테고리(대): 🎙 마이크</option>
-            <option value="케이블" selected>카테고리(대): 🔌 케이블</option>
-            <option value="이어폰/헤드폰">카테고리(대): 🎧 이어폰/헤드폰</option>
-            <option value="스탠드">카테고리(대): 📐 스탠드</option>
-            <option value="기타">카테고리(대): 📦 기타</option>
+            <option value="콘솔">🎛️ 콘솔</option>
+            <option value="앰프">🔊 앰프</option>
+            <option value="스피커">🔈 스피커</option>
+            <option value="마이크">🎙 마이크</option>
+            <option value="케이블" selected>🔌 케이블</option>
+            <option value="이어폰/헤드폰">🎧 이어폰/헤드폰</option>
+            <option value="스탠드">📐 스탠드</option>
+            <option value="기타">📦 기타</option>
           </select>
 
           <!-- 소분류 선택 -->
           <select id="subCategory" class="bg-slate-900 border border-slate-700 rounded-xl px-3.5 py-2.5 text-sm text-slate-200 focus:outline-none focus:border-blue-500 transition">
           </select>
 
-          <input id="eqName" type="text" placeholder="장비/케이블명 (예: Canary XLR 5M)" class="bg-slate-900 border border-slate-700 rounded-xl px-3.5 py-2.5 text-sm text-slate-200 focus:outline-none focus:border-blue-500 transition">
-          <input id="eqCode" type="text" placeholder="관리번호 (예: CBL-XLR-001)" class="bg-slate-900 border border-slate-700 rounded-xl px-3.5 py-2.5 text-sm text-slate-200 focus:outline-none focus:border-blue-500 transition">
+          <input id="eqName" type="text" placeholder="장비/케이블명 (예: Canare XLR 5m)" class="bg-slate-900 border border-slate-700 rounded-xl px-3.5 py-2.5 text-sm text-slate-200 focus:outline-none focus:border-blue-500 transition">
+          <input id="eqCode" type="text" placeholder="관리번호 (예: C-XLR-001)" class="bg-slate-900 border border-slate-700 rounded-xl px-3.5 py-2.5 text-sm text-slate-200 focus:outline-none focus:border-blue-500 transition">
           
           <!-- 보관 장소 -->
           <select id="eqLocation" class="bg-slate-900 border border-slate-700 rounded-xl px-3.5 py-2.5 text-sm text-slate-200 focus:outline-none focus:border-blue-500 transition">
-            <option value="방송실">보관장소: 방송실</option>
-            <option value="3층 대성전">보관장소: 3층 대성전</option>
-            <option value="2층 소성전">보관장소: 2층 소성전</option>
-            <option value="4층 창고">보관장소: 4층 창고</option>
-            <option value="길동 작업실">보관장소: 길동 작업실</option>
+            <option value="방송실">방송실</option>
+            <option value="3층 대성전">3층 대성전</option>
+            <option value="2층 소성전">2층 소성전</option>
+            <option value="4층 창고">4층 창고</option>
+            <option value="길동 작업실">길동 작업실</option>
           </select>
 
           <select id="eqStatus" class="bg-slate-900 border border-slate-700 rounded-xl px-3.5 py-2.5 text-sm text-slate-200 focus:outline-none focus:border-blue-500 transition">
-            <option value="정상">상태: 정상</option>
-            <option value="수리필요">상태: 수리필요</option>
-            <option value="점검중">상태: 점검중</option>
-            <option value="폐기">상태: 폐기</option>
+            <option value="정상">정상</option>
+            <option value="수리필요">수리필요</option>
+            <option value="점검중">점검중</option>
+            <option value="폐기">폐기</option>
           </select>
 
           <!-- 수량 입력 -->
-          <div class="flex items-center gap-2 bg-slate-900 border border-slate-700 rounded-xl px-3.5 py-1.5">
-            <span class="text-xs text-slate-400">등록 수량:</span>
-            <input id="eqQty" type="number" value="1" min="1" class="w-full bg-transparent text-sm text-slate-200 focus:outline-none font-bold">
+          <div class="flex items-center gap-2 bg-slate-900 border border-slate-700 rounded-xl px-3.5 py-2.5">
+            <input id="eqQty" type="number" value="1" min="1" placeholder="수량" class="w-full bg-transparent text-sm text-slate-200 focus:outline-none font-bold">
           </div>
 
-          <!-- 사진 업로드 -->
-          <div class="flex items-center gap-2 bg-slate-900 border border-slate-700 rounded-xl px-3.5 py-1.5">
-            <span class="text-xs text-slate-400">사진:</span>
-            <input id="eqImage" type="file" accept="image/*" onchange="handleImageUpload(event)" class="text-xs text-slate-400 file:mr-2 file:py-1 file:px-2 file:rounded-lg file:border-0 file:text-xs file:bg-slate-700 file:text-slate-200">
+          <!-- 커스텀 사진 업로드 (가로 정렬 및 문구 정리) -->
+          <div class="flex items-center bg-slate-900 border border-slate-700 rounded-xl px-3.5 py-2">
+            <label for="eqImage" class="cursor-pointer flex items-center justify-between w-full">
+              <span id="imageLabel" class="text-xs text-slate-400 whitespace-nowrap">📷 사진 첨부</span>
+              <span class="text-xs bg-slate-800 text-slate-300 px-2 py-1 rounded-lg border border-slate-700 hover:bg-slate-700 transition">선택</span>
+            </label>
+            <input id="eqImage" type="file" accept="image/*" onchange="handleImageUpload(event)" class="hidden">
           </div>
         </div>
 
         <button onclick="addEquipment()" class="w-full bg-blue-600 hover:bg-blue-500 text-white py-2.5 rounded-xl font-medium text-sm transition shadow-lg shadow-blue-900/30 active:scale-98">
-          장비 등록 / 수량 누적 저장
+          등록
         </button>
       </section>
 
@@ -207,12 +210,13 @@
     // 소분류 옵션 데이터
     const categoryOptions = {
       "콘솔": ["디지털 믹서", "아날로그 믹서", "오디오 인터페이스", "스테이지 박스", "기타 콘솔"],
-      "스피커": ["메인 스피커", "모니터 스피커", "서브우퍼", "파워 앰프", "기타 스피커"],
-      "마이크": ["유선 다이나믹", "유선 콘덴서", "무선 마이크(핸드)", "무선 마이크(벨트팩)", "핀/헤드셋 마이크"],
-      "케이블": ["마이크 케이블(XLR)", "스피커 케이블(Speakon)", "악기 케이블(TS/TRS)", "멀티 케이블", "전원 케이블", "변환 젠더/기타"],
+      "앰프": ["파워 앰프", "프리 앰프", "기타 앰프"],
+      "스피커": ["메인 스피커", "모니터 스피커", "서브우퍼", "기타 스피커"],
+      "마이크": ["다이나믹 마이크", "콘덴서 마이크", "무선 마이크", "핀/헤드셋 마이크"],
+      "케이블": ["마이크 케이블(XLR)", "스피커 케이블(Speakon)", "악기 케이블(TS/TRS)", "멀티 케이블", "전원 케이블"],
       "이어폰/헤드폰": ["인이어 이어폰", "모니터링 헤드폰", "무선 수신기 팩"],
-      "스탠드": ["마이크 스탠드(T자)", "마이크 스탠드(일자)", "스피커 스탠드", "악기/악보대 스탠드"],
-      "기타": ["악세사리", "전원 공급장치", "기타 장비"]
+      "스탠드": ["마이크 스탠드(T자)", "마이크 스탠드(일자)", "스피커 스탠드"],
+      "기타": ["변환 젠더/어댑터", "악세사리", "전원 공급장치", "기타 장비"]
     };
 
     let db = null;
@@ -240,7 +244,7 @@
       subs.forEach(sub => {
         const opt = document.createElement('option');
         opt.value = sub;
-        opt.innerText = `소분류: ${sub}`;
+        opt.innerText = sub;
         subSelect.appendChild(opt);
       });
     }
@@ -256,7 +260,7 @@
           renderCheckoutList();
         });
       } else {
-        equipmentData = JSON.parse(localStorage.getItem('gd_sound_db_v4') || '[]');
+        equipmentData = JSON.parse(localStorage.getItem('gd_sound_db_v6') || '[]');
         renderList();
         renderCheckoutList();
       }
@@ -268,6 +272,8 @@
       const reader = new FileReader();
       reader.onloadend = () => {
         currentBase64Image = reader.result;
+        document.getElementById('imageLabel').innerText = "✓ 이미지 첨부됨";
+        document.getElementById('imageLabel').className = "text-xs text-emerald-400 font-semibold whitespace-nowrap";
       };
       reader.readAsDataURL(file);
     }
@@ -319,7 +325,7 @@
           existingItem.location = location;
           existingItem.status = status;
           if (currentBase64Image) existingItem.image = currentBase64Image;
-          localStorage.setItem('gd_sound_db_v4', JSON.stringify(equipmentData));
+          localStorage.setItem('gd_sound_db_v6', JSON.stringify(equipmentData));
           renderList();
         }
         alert(`[${existingItem.name}] 수량이 +${qty}개 누적되었습니다. (총 ${newQty}개)`);
@@ -342,7 +348,7 @@
           db.collection("equipments").doc(code).set(newItem);
         } else {
           equipmentData.unshift(newItem);
-          localStorage.setItem('gd_sound_db_v4', JSON.stringify(equipmentData));
+          localStorage.setItem('gd_sound_db_v6', JSON.stringify(equipmentData));
           renderList();
         }
       }
@@ -351,6 +357,8 @@
       document.getElementById('eqCode').value = '';
       document.getElementById('eqQty').value = '1';
       document.getElementById('eqImage').value = '';
+      document.getElementById('imageLabel').innerText = "📷 사진 첨부";
+      document.getElementById('imageLabel').className = "text-xs text-slate-400 whitespace-nowrap";
       currentBase64Image = '';
     }
 
@@ -372,7 +380,7 @@
                            eq.status === '정상' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : 'bg-rose-500/10 text-rose-400 border-rose-500/20';
 
         const categoryIcons = {
-          "콘솔": "🎛️️", "스피커": "🔊", "마이크": "🎙", "케이블": "🔌",
+          "콘솔": "🎛️", "앰프": "🔊", "스피커": "🔈", "마이크": "🎙", "케이블": "🔌",
           "이어폰/헤드폰": "🎧", "스탠드": "📐", "기타": "📦"
         };
         const icon = categoryIcons[eq.mainCategory] || "📦";
@@ -454,7 +462,7 @@
         db.collection("equipments").doc(code).update(updateData);
       } else {
         Object.assign(item, updateData);
-        localStorage.setItem('gd_sound_db_v4', JSON.stringify(equipmentData));
+        localStorage.setItem('gd_sound_db_v6', JSON.stringify(equipmentData));
         renderList();
         renderCheckoutList();
       }
