@@ -13,6 +13,11 @@
   <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
   <style>
     #reader video { object-fit: cover; width: 100% !important; border-radius: 0.75rem; }
+    @media print {
+      body * { visibility: hidden; }
+      #printArea, #printArea * { visibility: visible; }
+      #printArea { position: absolute; left: 0; top: 0; }
+    }
   </style>
 </head>
 <body class="bg-slate-900 text-slate-100 min-h-screen pb-10">
@@ -22,7 +27,7 @@
     <header class="flex justify-between items-center bg-slate-800/80 backdrop-blur p-4 rounded-2xl border border-slate-700 shadow-xl">
       <div>
         <h1 class="text-xl font-bold bg-gradient-to-r from-blue-400 to-emerald-400 bg-clip-text text-transparent">GD Sound System</h1>
-        <p class="text-xs text-slate-400 mt-0.5">교회 음향 장비 & 케이블 관리자</p>
+        <p class="text-xs text-slate-400 mt-0.5">장비 관리 시스템</p>
       </div>
       <button onclick="openScanner()" class="bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white font-semibold px-4 py-2 rounded-xl text-sm shadow-lg shadow-emerald-900/30 flex items-center gap-2 transition-all active:scale-95">
         <span>📷</span> QR 스캔
@@ -31,7 +36,7 @@
 
     <!-- 메인 탭 메뉴 -->
     <div class="flex bg-slate-800 p-1 rounded-xl border border-slate-700 text-sm font-medium">
-      <button id="tabBtn1" onclick="switchTab('inventory')" class="flex-1 py-2 rounded-lg bg-blue-600 text-white transition">장비 / 케이블 목록</button>
+      <button id="tabBtn1" onclick="switchTab('inventory')" class="flex-1 py-2 rounded-lg bg-blue-600 text-white transition">장비 목록</button>
       <button id="tabBtn2" onclick="switchTab('checkout')" class="flex-1 py-2 rounded-lg text-slate-400 hover:text-slate-200 transition">🚛 출고 / 반납 현황</button>
     </div>
 
@@ -40,21 +45,59 @@
       <!-- 장비 등록 폼 -->
       <section class="bg-slate-800 p-5 rounded-2xl border border-slate-700 shadow-lg space-y-4">
         <h2 class="text-sm font-semibold text-slate-300 flex items-center gap-2">
-          <span class="w-2 h-2 rounded-full bg-blue-400"></span> 신규 장비 / 케이블 등록
+          <span class="w-2 h-2 rounded-full bg-blue-400"></span> 장비 등록
         </h2>
+        
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <!-- 대분류 선택 -->
+          <select id="mainCategory" onchange="updateSubCategory()" class="bg-slate-900 border border-slate-700 rounded-xl px-3.5 py-2.5 text-sm text-slate-200 focus:outline-none focus:border-blue-500 transition">
+            <option value="콘솔">카테고리(대): 🎛️ 콘솔</option>
+            <option value="스피커">카테고리(대): 🔊 스피커</option>
+            <option value="마이크">카테고리(대): 🎙 마이크</option>
+            <option value="케이블" selected>카테고리(대): 🔌 케이블</option>
+            <option value="이어폰/헤드폰">카테고리(대): 🎧 이어폰/헤드폰</option>
+            <option value="스탠드">카테고리(대): 📐 스탠드</option>
+            <option value="기타">카테고리(대): 📦 기타</option>
+          </select>
+
+          <!-- 소분류 선택 -->
+          <select id="subCategory" class="bg-slate-900 border border-slate-700 rounded-xl px-3.5 py-2.5 text-sm text-slate-200 focus:outline-none focus:border-blue-500 transition">
+          </select>
+
           <input id="eqName" type="text" placeholder="장비/케이블명 (예: Canary XLR 5M)" class="bg-slate-900 border border-slate-700 rounded-xl px-3.5 py-2.5 text-sm text-slate-200 focus:outline-none focus:border-blue-500 transition">
           <input id="eqCode" type="text" placeholder="관리번호 (예: CBL-XLR-001)" class="bg-slate-900 border border-slate-700 rounded-xl px-3.5 py-2.5 text-sm text-slate-200 focus:outline-none focus:border-blue-500 transition">
-          <input id="eqLocation" type="text" placeholder="보관 위치 (예: 자막실 케이블렉)" class="bg-slate-900 border border-slate-700 rounded-xl px-3.5 py-2.5 text-sm text-slate-200 focus:outline-none focus:border-blue-500 transition">
+          
+          <!-- 보관 장소 -->
+          <select id="eqLocation" class="bg-slate-900 border border-slate-700 rounded-xl px-3.5 py-2.5 text-sm text-slate-200 focus:outline-none focus:border-blue-500 transition">
+            <option value="방송실">보관장소: 방송실</option>
+            <option value="3층 대성전">보관장소: 3층 대성전</option>
+            <option value="2층 소성전">보관장소: 2층 소성전</option>
+            <option value="4층 창고">보관장소: 4층 창고</option>
+            <option value="길동 작업실">보관장소: 길동 작업실</option>
+          </select>
+
           <select id="eqStatus" class="bg-slate-900 border border-slate-700 rounded-xl px-3.5 py-2.5 text-sm text-slate-200 focus:outline-none focus:border-blue-500 transition">
             <option value="정상">상태: 정상</option>
             <option value="수리필요">상태: 수리필요</option>
             <option value="점검중">상태: 점검중</option>
             <option value="폐기">상태: 폐기</option>
           </select>
+
+          <!-- 수량 입력 -->
+          <div class="flex items-center gap-2 bg-slate-900 border border-slate-700 rounded-xl px-3.5 py-1.5">
+            <span class="text-xs text-slate-400">등록 수량:</span>
+            <input id="eqQty" type="number" value="1" min="1" class="w-full bg-transparent text-sm text-slate-200 focus:outline-none font-bold">
+          </div>
+
+          <!-- 사진 업로드 -->
+          <div class="flex items-center gap-2 bg-slate-900 border border-slate-700 rounded-xl px-3.5 py-1.5">
+            <span class="text-xs text-slate-400">사진:</span>
+            <input id="eqImage" type="file" accept="image/*" onchange="handleImageUpload(event)" class="text-xs text-slate-400 file:mr-2 file:py-1 file:px-2 file:rounded-lg file:border-0 file:text-xs file:bg-slate-700 file:text-slate-200">
+          </div>
         </div>
+
         <button onclick="addEquipment()" class="w-full bg-blue-600 hover:bg-blue-500 text-white py-2.5 rounded-xl font-medium text-sm transition shadow-lg shadow-blue-900/30 active:scale-98">
-          장비 등록 (실시간 동기화)
+          장비 등록 / 수량 누적 저장
         </button>
       </section>
 
@@ -110,10 +153,27 @@
   <div id="qrModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm hidden flex items-center justify-center p-4 z-50">
     <div class="bg-slate-800 border border-slate-700 rounded-2xl p-6 w-full max-w-xs text-center space-y-4 shadow-2xl">
       <h3 id="qrModalTitle" class="font-bold text-lg text-slate-100"></h3>
-      <div class="p-3 bg-white rounded-xl inline-block shadow-inner">
-        <div id="qrcode"></div>
+      
+      <!-- 인쇄 크기 선택 옵션 -->
+      <div class="flex justify-center items-center gap-2 text-xs text-slate-300">
+        <span>출력 크기:</span>
+        <select id="qrSizeSelect" onchange="updateQRSize()" class="bg-slate-900 border border-slate-700 rounded-lg px-2 py-1 text-slate-200">
+          <option value="75">소형 (2cm x 2cm - 케이블/소형)</option>
+          <option value="130" selected>중형 (3.5cm x 3.5cm - 표준)</option>
+          <option value="190">대형 (5cm x 5cm - 장비/랙케이스)</option>
+        </select>
       </div>
+
+      <div id="printArea" class="p-3 bg-white rounded-xl inline-block shadow-inner mx-auto">
+        <div id="qrcode" class="flex justify-center"></div>
+      </div>
+      
+      <div id="qrPhotoContainer" class="hidden">
+        <img id="qrModalPhoto" class="w-full h-32 object-cover rounded-xl border border-slate-700" src="" alt="장비 사진">
+      </div>
+
       <p id="qrModalCode" class="text-xs font-mono text-slate-400"></p>
+      
       <div class="flex gap-2">
         <button onclick="window.print()" class="flex-1 bg-slate-700 hover:bg-slate-600 text-slate-200 py-2 rounded-xl text-xs font-medium transition">인쇄하기</button>
         <button onclick="closeQRModal()" class="flex-1 bg-slate-900 hover:bg-slate-950 text-slate-400 py-2 rounded-xl text-xs font-medium transition">닫기</button>
@@ -134,17 +194,26 @@
   </div>
 
   <script>
-    // -----------------------------------------------------------------
-    // 1. Firebase 초기화 설정 (Firebase 콘솔의 내 키 값으로 교체하는 부분)
-    // -----------------------------------------------------------------
+    // 1. Firebase 초기화 설정
     const firebaseConfig = {
-  apiKey: "AIzaSyAT9O5kaYX60FAlioXJgU0LBi4xAujaOiM",
-  authDomain: "gd-sound.firebaseapp.com",
-  projectId: "gd-sound",
-  storageBucket: "gd-sound.firebasestorage.app",
-  messagingSenderId: "1031733562702",
-  appId: "1:1031733562702:web:fa8b25f845d50622a2e21f"
-};
+      apiKey: "YOUR_API_KEY",
+      authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
+      projectId: "YOUR_PROJECT_ID",
+      storageBucket: "YOUR_PROJECT_ID.appspot.com",
+      messagingSenderId: "YOUR_SENDER_ID",
+      appId: "YOUR_APP_ID"
+    };
+
+    // 소분류 옵션 데이터
+    const categoryOptions = {
+      "콘솔": ["디지털 믹서", "아날로그 믹서", "오디오 인터페이스", "스테이지 박스", "기타 콘솔"],
+      "스피커": ["메인 스피커", "모니터 스피커", "서브우퍼", "파워 앰프", "기타 스피커"],
+      "마이크": ["유선 다이나믹", "유선 콘덴서", "무선 마이크(핸드)", "무선 마이크(벨트팩)", "핀/헤드셋 마이크"],
+      "케이블": ["마이크 케이블(XLR)", "스피커 케이블(Speakon)", "악기 케이블(TS/TRS)", "멀티 케이블", "전원 케이블", "변환 젠더/기타"],
+      "이어폰/헤드폰": ["인이어 이어폰", "모니터링 헤드폰", "무선 수신기 팩"],
+      "스탠드": ["마이크 스탠드(T자)", "마이크 스탠드(일자)", "스피커 스탠드", "악기/악보대 스탠드"],
+      "기타": ["악세사리", "전원 공급장치", "기타 장비"]
+    };
 
     let db = null;
     let isFirebaseReady = false;
@@ -157,8 +226,24 @@
 
     let equipmentData = [];
     let html5QrcodeScanner = null;
+    let currentBase64Image = '';
+    let currentQRData = { name: '', code: '' };
 
     document.getElementById('eventDate').valueAsDate = new Date();
+
+    function updateSubCategory() {
+      const mainCat = document.getElementById('mainCategory').value;
+      const subSelect = document.getElementById('subCategory');
+      subSelect.innerHTML = '';
+
+      const subs = categoryOptions[mainCat] || ["기타"];
+      subs.forEach(sub => {
+        const opt = document.createElement('option');
+        opt.value = sub;
+        opt.innerText = `소분류: ${sub}`;
+        subSelect.appendChild(opt);
+      });
+    }
 
     function loadData() {
       if (isFirebaseReady) {
@@ -171,10 +256,20 @@
           renderCheckoutList();
         });
       } else {
-        equipmentData = JSON.parse(localStorage.getItem('gd_sound_db') || '[]');
+        equipmentData = JSON.parse(localStorage.getItem('gd_sound_db_v4') || '[]');
         renderList();
         renderCheckoutList();
       }
+    }
+
+    function handleImageUpload(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        currentBase64Image = reader.result;
+      };
+      reader.readAsDataURL(file);
     }
 
     function switchTab(tab) {
@@ -192,26 +287,71 @@
     }
 
     function addEquipment() {
+      const mainCat = document.getElementById('mainCategory').value;
+      const subCat = document.getElementById('subCategory').value;
       const name = document.getElementById('eqName').value.trim();
       const code = document.getElementById('eqCode').value.trim();
-      const location = document.getElementById('eqLocation').value.trim();
+      const location = document.getElementById('eqLocation').value;
       const status = document.getElementById('eqStatus').value;
+      const qty = parseInt(document.getElementById('eqQty').value) || 1;
 
       if (!name || !code) return alert('장비 이름과 관리번호는 필수입니다.');
 
-      const newItem = { name, code, location, status, isCheckedOut: false, eventName: '', checkoutDate: '' };
+      const existingIndex = equipmentData.findIndex(e => e.code === code || e.name === name);
 
-      if (isFirebaseReady) {
-        db.collection("equipments").doc(code).set(newItem);
+      if (existingIndex > -1) {
+        const existingItem = equipmentData[existingIndex];
+        const newQty = (existingItem.quantity || 1) + qty;
+
+        if (isFirebaseReady) {
+          db.collection("equipments").doc(existingItem.code).update({
+            quantity: newQty,
+            mainCategory: mainCat,
+            subCategory: subCat,
+            location: location,
+            status: status,
+            image: currentBase64Image || existingItem.image || ''
+          });
+        } else {
+          existingItem.quantity = newQty;
+          existingItem.mainCategory = mainCat;
+          existingItem.subCategory = subCat;
+          existingItem.location = location;
+          existingItem.status = status;
+          if (currentBase64Image) existingItem.image = currentBase64Image;
+          localStorage.setItem('gd_sound_db_v4', JSON.stringify(equipmentData));
+          renderList();
+        }
+        alert(`[${existingItem.name}] 수량이 +${qty}개 누적되었습니다. (총 ${newQty}개)`);
       } else {
-        equipmentData.unshift(newItem);
-        localStorage.setItem('gd_sound_db', JSON.stringify(equipmentData));
-        renderList();
+        const newItem = {
+          name,
+          code,
+          mainCategory: mainCat,
+          subCategory: subCat,
+          location,
+          status,
+          quantity: qty,
+          image: currentBase64Image,
+          isCheckedOut: false,
+          eventName: '',
+          checkoutDate: ''
+        };
+
+        if (isFirebaseReady) {
+          db.collection("equipments").doc(code).set(newItem);
+        } else {
+          equipmentData.unshift(newItem);
+          localStorage.setItem('gd_sound_db_v4', JSON.stringify(equipmentData));
+          renderList();
+        }
       }
 
       document.getElementById('eqName').value = '';
       document.getElementById('eqCode').value = '';
-      document.getElementById('eqLocation').value = '';
+      document.getElementById('eqQty').value = '1';
+      document.getElementById('eqImage').value = '';
+      currentBase64Image = '';
     }
 
     function renderList() {
@@ -222,6 +362,8 @@
       const filtered = equipmentData.filter(eq => 
         eq.name.toLowerCase().includes(keyword) || 
         eq.code.toLowerCase().includes(keyword) ||
+        (eq.mainCategory && eq.mainCategory.toLowerCase().includes(keyword)) ||
+        (eq.subCategory && eq.subCategory.toLowerCase().includes(keyword)) ||
         (eq.location && eq.location.toLowerCase().includes(keyword))
       );
 
@@ -229,19 +371,32 @@
         const badgeColor = eq.isCheckedOut ? 'bg-amber-500/20 text-amber-400 border-amber-500/30' :
                            eq.status === '정상' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : 'bg-rose-500/10 text-rose-400 border-rose-500/20';
 
+        const categoryIcons = {
+          "콘솔": "🎛️️", "스피커": "🔊", "마이크": "🎙", "케이블": "🔌",
+          "이어폰/헤드폰": "🎧", "스탠드": "📐", "기타": "📦"
+        };
+        const icon = categoryIcons[eq.mainCategory] || "📦";
+
         const card = document.createElement('div');
         card.className = 'bg-slate-800/60 border border-slate-700/60 p-4 rounded-xl shadow flex justify-between items-center';
         card.innerHTML = `
-          <div class="space-y-1">
-            <div class="flex items-center gap-2">
-              <span class="font-bold text-slate-200 text-sm">${eq.name}</span>
-              <span class="text-[10px] px-2 py-0.5 rounded-full border ${badgeColor}">${eq.isCheckedOut ? '출고중' : eq.status}</span>
+          <div class="flex items-center gap-3">
+            ${eq.image ? `<img src="${eq.image}" class="w-12 h-12 rounded-lg object-cover border border-slate-700">` : `<div class="w-12 h-12 bg-slate-900 rounded-lg flex items-center justify-center text-xs text-slate-600">${icon}</div>`}
+            <div class="space-y-0.5">
+              <div class="flex items-center gap-2">
+                <span class="font-bold text-slate-200 text-sm">${eq.name}</span>
+                <span class="text-[10px] px-1.5 py-0.5 rounded-full border border-blue-500/30 bg-blue-500/10 text-blue-400 font-semibold">${eq.quantity || 1}개</span>
+                <span class="text-[10px] px-2 py-0.5 rounded-full border ${badgeColor}">${eq.isCheckedOut ? '출고중' : eq.status}</span>
+              </div>
+              <div class="text-xs font-mono text-slate-400">${eq.code}</div>
+              <div class="text-xs text-slate-400 flex items-center gap-1">
+                <span class="bg-slate-700/60 px-1.5 py-0.2 rounded text-[11px] text-slate-300">${icon} ${eq.mainCategory || '케이블'} / ${eq.subCategory || 'XLR'}</span>
+                <span>• 📍 ${eq.location || '방송실'}</span>
+              </div>
             </div>
-            <div class="text-xs font-mono text-slate-400">${eq.code}</div>
-            <div class="text-xs text-slate-500">📍 ${eq.location || '위치 미지정'}</div>
           </div>
           <div class="flex gap-2">
-            <button onclick="showQR('${eq.name}', '${eq.code}')" class="bg-slate-700 hover:bg-slate-600 text-slate-200 text-xs px-3 py-2 rounded-lg border border-slate-600">
+            <button onclick="showQR('${eq.name}', '${eq.code}', '${eq.image || ''}')" class="bg-slate-700 hover:bg-slate-600 text-slate-200 text-xs px-3 py-2 rounded-lg border border-slate-600">
               QR
             </button>
             <button onclick="toggleCheckout('${eq.code}')" class="text-xs px-3 py-2 rounded-lg font-medium border ${eq.isCheckedOut ? 'bg-amber-900/40 text-amber-300 border-amber-700' : 'bg-slate-800 text-slate-400 border-slate-700'}">
@@ -260,7 +415,7 @@
       document.getElementById('checkoutCount').innerText = checkedOutItems.length;
 
       if (checkedOutItems.length === 0) {
-        container.innerHTML = `<div class="text-center py-8 text-xs text-slate-500">현재 출고된 장비가 없습니다. 스캔하여 출고해보세요!</div>`;
+        container.innerHTML = `<div class="text-center py-8 text-xs text-slate-500">현재 출고된 장비가 없습니다.</div>`;
         return;
       }
 
@@ -269,8 +424,9 @@
         card.className = 'bg-slate-800 border border-amber-500/30 p-4 rounded-xl flex justify-between items-center';
         card.innerHTML = `
           <div>
-            <div class="font-bold text-slate-100 text-sm">${eq.name} <span class="text-xs font-normal text-amber-400">(${eq.code})</span></div>
+            <div class="font-bold text-slate-100 text-sm">${eq.name} <span class="text-xs text-blue-400">(${eq.quantity || 1}개)</span></div>
             <div class="text-xs text-slate-400 mt-1">🗓️ 행사: ${eq.eventName || '미지정'} | 날짜: ${eq.checkoutDate || '미지정'}</div>
+            <div class="text-xs text-slate-500">🏷️ 분류: ${eq.mainCategory || ''} - ${eq.subCategory || ''} | 📍 보관지: ${eq.location}</div>
           </div>
           <button onclick="toggleCheckout('${eq.code}')" class="bg-emerald-600 hover:bg-emerald-500 text-white text-xs px-3 py-1.5 rounded-lg font-medium shadow">
             반납하기
@@ -298,7 +454,7 @@
         db.collection("equipments").doc(code).update(updateData);
       } else {
         Object.assign(item, updateData);
-        localStorage.setItem('gd_sound_db', JSON.stringify(equipmentData));
+        localStorage.setItem('gd_sound_db_v4', JSON.stringify(equipmentData));
         renderList();
         renderCheckoutList();
       }
@@ -330,10 +486,39 @@
       }
     }
 
+    function showQR(name, code, image) {
+      currentQRData = { name, code };
+      document.getElementById('qrModalTitle').innerText = name;
+      document.getElementById('qrModalCode').innerText = code;
+      
+      const photoContainer = document.getElementById('qrPhotoContainer');
+      const photoImg = document.getElementById('qrModalPhoto');
+      if (image) {
+        photoImg.src = image;
+        photoContainer.classList.remove('hidden');
+      } else {
+        photoContainer.classList.add('hidden');
+      }
+
+      updateQRSize();
+      document.getElementById('qrModal').classList.remove('hidden');
+    }
+
+    function updateQRSize() {
+      const size = parseInt(document.getElementById('qrSizeSelect').value) || 130;
+      const qrContainer = document.getElementById('qrcode');
+      qrContainer.innerHTML = '';
+      new QRCode(qrContainer, { text: currentQRData.code, width: size, height: size, correctLevel: QRCode.CorrectLevel.L });
+    }
+
+    function closeQRModal() {
+      document.getElementById('qrModal').classList.add('hidden');
+    }
+
     function exportToExcel() {
-      let csv = "\uFEFF장비명,관리번호,보관위치,상태,출고여부,행사명,출고일자\n";
+      let csv = "\uFEFF대분류,소분류,장비명,수량,관리번호,보관위치,상태,출고여부,행사명,출고일자\n";
       equipmentData.forEach(e => {
-        csv += `"${e.name}","${e.code}","${e.location || ''}","${e.status}","${e.isCheckedOut ? '출고중' : '보관중'}","${e.eventName || ''}","${e.checkoutDate || ''}"\n`;
+        csv += `"${e.mainCategory || '기타'}","${e.subCategory || '기타'}","${e.name}","${e.quantity || 1}","${e.code}","${e.location || '방송실'}","${e.status}","${e.isCheckedOut ? '출고중' : '보관중'}","${e.eventName || ''}","${e.checkoutDate || ''}"\n`;
       });
       downloadCSV(csv, `GD_Sound_장비전체목록_${new Date().toISOString().split('T')[0]}.csv`);
     }
@@ -342,9 +527,9 @@
       const checkedOut = equipmentData.filter(e => e.isCheckedOut);
       if (checkedOut.length === 0) return alert('출고된 장비가 없습니다.');
 
-      let csv = "\uFEFF행사명,출고일자,장비명,관리번호,보관위치\n";
+      let csv = "\uFEFF행사명,출고일자,대분류,소분류,장비명,수량,관리번호,보관위치\n";
       checkedOut.forEach(e => {
-        csv += `"${e.eventName}","${e.checkoutDate}","${e.name}","${e.code}","${e.location || ''}"\n`;
+        csv += `"${e.eventName}","${e.checkoutDate}","${e.mainCategory || '기타'}","${e.subCategory || '기타'}","${e.name}","${e.quantity || 1}","${e.code}","${e.location || '방송실'}"\n`;
       });
       downloadCSV(csv, `GD_Sound_출고명세서_${new Date().toISOString().split('T')[0]}.csv`);
     }
@@ -359,19 +544,8 @@
       document.body.removeChild(link);
     }
 
-    function showQR(name, code) {
-      document.getElementById('qrModalTitle').innerText = name;
-      document.getElementById('qrModalCode').innerText = code;
-      const qrContainer = document.getElementById('qrcode');
-      qrContainer.innerHTML = '';
-      new QRCode(qrContainer, { text: code, width: 160, height: 160, correctLevel: QRCode.CorrectLevel.L });
-      document.getElementById('qrModal').classList.remove('hidden');
-    }
-
-    function closeQRModal() {
-      document.getElementById('qrModal').classList.add('hidden');
-    }
-
+    // 초기 실행
+    updateSubCategory();
     loadData();
   </script>
 </body>
